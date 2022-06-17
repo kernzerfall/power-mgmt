@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR="/opt/power-mgmt/"
+
+source "$SCRIPT_DIR/globals.rc"
+source "$SCRIPT_DIR/run-acpi-call.rc"
+
+# ACPI path to set power mode
+POWER_MODE_SET="${ACPI_BASE_PATH}.VPC0.DYTC"
+# Power modes
+declare -A POWER_MODE_VALUES=(
+    ["extreme_performance"]="0x0012B001"
+    ["battery_saving"]="0x0013B001"
+    ["intelligent_cooling"]="0x000FB001"
+)
+
+power_mode_get(){
+    # Get QTMD and STMD bits
+    run_acpi_call "$ACPI_BASE_PATH.QTMD"
+    QTMD="$ret"
+    run_acpi_call "$ACPI_BASE_PATH.STMD"
+    STMD="$ret"
+
+    # Interpret results
+    printf "current mode: "
+    if [[ "$QTMD" = "0x0" ]] && [[ "$STMD" = "0x0" ]]; then
+        echo "extreme_performance"
+    elif [[ "$QTMD" = "0x1" ]] && [[ "$STMD" = "0x0" ]]; then
+        echo "battery_saving"
+    elif [[ "$QTMD" = "0x0" ]] && [[ "$STMD" = "0x1" ]]; then
+        echo "intelligent_cooling"
+    fi
+}
+
+power_mode_set(){
+    CMD="${POWER_MODE_VALUES[$1]}"
+    if [[ "$CMD" = "" ]]; then
+        echo "power_mode_set: invalid power mode"
+        echo "available: [ extreme_performance battery_saving intelligent_cooling ]"
+        return 1
+    fi
+
+    run_acpi_call "$POWER_MODE_SET $CMD"
+    power_mode_get
+}

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Runs an acpi call. If the calling script has a `ret`
+# global variable, the result will be saved there.
+run_acpi_call(){
+    PRIV=""
+    if [[ $USER -ne 0 ]]; then
+        PRIV="sudo"
+    fi
+
+    echo "$@" | $PRIV tee $ACPI_CALL > /dev/null
+    ret="$($PRIV cat $ACPI_CALL | cut -d '' -f1)"
+}

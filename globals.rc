@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Make sure you have acpi_call set up and the module is loaded
+ACPI_CALL="/proc/acpi/call"
+ACPI_BASE_PATH='\_SB.PCI0.LPC0.EC0'
+
+# Store the user that is calling the script
+# Used to decide whether to use sudo
+USER=$(id -u)
+
+# Global variable for functions to store their return values
+# Use with caution, may get overwritten by intermediary functions
+ret=""

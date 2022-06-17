@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR="/opt/power-mgmt/"
+
+source "$SCRIPT_DIR/globals.rc"
+source "$SCRIPT_DIR/run-acpi-call.rc"
+
+# ACPI path to set the value of rapid charge
+RAPID_CHARGE_SET="${ACPI_BASE_PATH}.VPC0.SBMC"
+# ACPI path to get the value of rapid charge
+RAPID_CHARGE_QUERY="${ACPI_BASE_PATH}.FCGM"
+
+declare -A RAPID_CHARGE_SET_VALUES=(
+    ['on']='0x07'
+    ['off']='0x08'
+)
+
+# Sets rapid charge to on or off
+rapid_charge_set(){
+    if [[ $# -ne 1 ]]; then
+        echo "rapid_charge_set: invalid argc"
+        return 1
+    elif [[ $1 != "on" ]] && [[ $1 != "off" ]]; then
+        echo "rapid_charge_set: invalid argument"
+        return 1
+    fi
+
+    run_acpi_call "$RAPID_CHARGE_SET ${RAPID_CHARGE_SET_VALUES[$1]}"
+    rapid_charge_get
+}
+
+# Gets the current rapid charge status
+rapid_charge_get(){
+    if [[ $# -ne 0 ]]; then
+        echo "rapid_charge_get: no arguments must be supplied"
+        return 1
+    fi
+
+    run_acpi_call "$RAPID_CHARGE_QUERY"
+    if [[ "$ret" = "0x0" ]]; then
+        echo "rapid charge OFF"
+    elif [[ "$ret" = "0x1" ]]; then
+        echo "rapid charge ON"
+    else
+        echo "rapid_charge_get: unknown result > $ret"
+    fi
+}
